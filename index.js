@@ -140,7 +140,7 @@ app.patch('/api/wishlist', verifyToken, async (req, res) => {
     const { userId, courseId } = req.body;
     
     try {
-        // userId যদি string হিসেবে আসে তবে সেটাকে ObjectId তে রূপান্তর করতে হবে
+        
         const query = { _id: new ObjectId(userId) };
         const user = await usersCollection.findOne(query);
 
@@ -148,7 +148,6 @@ app.patch('/api/wishlist', verifyToken, async (req, res) => {
             return res.status(404).send({ message: 'User not found' });
         }
 
-        // চেক করা হচ্ছে কোর্সটি আগে থেকেই উইশলিস্টে আছে কি না
         const isExist = user.wishlist?.includes(courseId);
 
         const update = isExist 
@@ -184,7 +183,7 @@ app.post('/create-checkout-session', async (req, res) => {
           cancel_url: `http://localhost:5173/courses`,
           metadata: { 
             courseId: course._id, 
-            courseName: course.title, // এটি যোগ করা হয়েছে
+            courseName: course.title, 
             userEmail: userEmail 
           }
         });
@@ -194,7 +193,6 @@ app.post('/create-checkout-session', async (req, res) => {
       }
     });
 
-    // ২. পেমেন্ট কনফার্মেশন (db.collection এর বদলে ভেরিয়েবল ব্যবহার করা হয়েছে)
     app.post('/confirm-payment', async (req, res) => {
   const { sessionId } = req.body;
  // console.log("1. Received Session ID from Frontend:", sessionId);
@@ -217,14 +215,12 @@ app.post('/create-checkout-session', async (req, res) => {
         status: 'success'
       };
 
-      // চেক করুন এই transactionId দিয়ে আগে থেকেই ডাটা আছে কি না
       const existingOrder = await ordersCollection.findOne({ transactionId: transactionId });
       
       if (!existingOrder) {
         const result = await ordersCollection.insertOne(orderData);
         console.log("4. Data Inserted Successfully:", result);
 
-        // ইউজার কালেকশনে আপডেট
         const userUpdate = await usersCollection.updateOne(
           { email: session.metadata.userEmail },
           { $addToSet: { enrolledCourses: session.metadata.courseId } }
